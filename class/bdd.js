@@ -6,14 +6,14 @@ class DB {
 
 
 
-    async getPlayers() {
-      let query = "SELECT * FROM players";
-      return this.doQuery(query)
+    async getPlayerByMail(mail) {
+      let query = "SELECT * FROM players WHERE mail = ?";
+      return this.doQueryParams(query, [mail]);
     }
 
     async storeNewPlayer(pseudo, mail, password) {
       let query = "INSERT INTO players (pseudo, mail, password, money, rank) VALUES (?, ?, ?, ?, ?)";
-      return this.doQueryParams(query, [pseudo, mail, password, this.Config.Player.INITIAL_MONEY, this.Config.Player.PLAYER_RANK])
+      return this.doQueryParams(query, [pseudo, mail, password, this.Config.Player.INITIAL_MONEY, this.Config.Player.PLAYER_RANK]);
     }
 
 

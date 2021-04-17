@@ -1,11 +1,11 @@
 class Player {
 
-	constructor(pseudo) {
-		this.pseudo = pseudo;
+	constructor(player) {
+		this.player = player;
 	}
 
 	getPseudo() {
-		return this.pseudo;
+		return this.player.pseudo;
 	}
 
 }
