@@ -48,13 +48,13 @@
       <div class="col-lg-12 my-4">
         <div class="row">
           <div class="col-lg-12  my-4 text-center">
-            <img src="/images/loli-teach.jpg" style="width:100% height:100%;" alt="">
+            <img src="/images/loli-teach2.jpg" style="width:100% height:100%;" alt="">
           </div>
         </div>
       </div>
       <% if(locals.player) { %>
 
-         <% if(player.tutorial == 1) { %>
+        <% if(player.tutorial == 1) { %>
             <div class="col-lg-12 my-4">
               <div class="row">
                 <div class="col-lg-12 card my-4">
@@ -63,19 +63,51 @@
                   </div>
                   <div class="card-body">
                      <p>
-                      Salut à toi jeune dresseur !
+                      Bienvenue dans mon laboratoire !
                     </p> 
                     <p>
-                      Je vois que tu es nouveau dans le monde de Pokéloli ! Tu vas voir, c'est un monde passionnant où les bonnes surprises ne manquent pas :)
+                      Tu trouveras ci-dessous la liste des lolis qu'il me reste en stock. <br/>Elles ont toutes un très fort potentiel. Je ne saurais te dire pourquoi, mais je le sens...
                     </p> 
-                    <p>
-                      Pour l'instant, tu n'as aucune loli avec toi pour t'aider dans ton aventure. Et si on allait en récupérer une tout de suite ? <br/>
-                      Il se trouve justement qu'il m'en reste quelques unes qui n'ont pas trouvé de dresseur.
-                    </p>
-                    <a href="/professeur-loli" class="btn btn-primary">Aller au laboratoire de du Professeur Loli</a>
                   </div>
                 </div>
               </div>
+
+
+              <div class="col-lg-12">
+
+                <div class="row">
+
+                  <% for(i = 0; i < lolis.length; i++) { %>
+                    <div class="col-lg-4 col-md-6 mb-4">
+                      <div class="card h-100">
+                        <a href="#"><img class="card-img-top" src="<%= lolis[i].img %>" alt=""></a>
+                        <div class="card-body">
+                          <h4 class="card-title">
+                            <a href="#"><%= lolis[i].name %></a>
+                          </h4>
+                          <h5 class="text-center"><img src="/images/types/<%= lolis[i].type %>.png" alt=""></h5><hr>
+                          <p class="card-text">
+                            <b>PV :</b> <%= lolis[i].base_PV %> <br/>
+                            <b>ATQ :</b> <%= lolis[i].base_ATQ %> <br/>
+                            <b>DEF :</b> <%= lolis[i].base_DEF %> <br/>
+                            <b>Vit :</b> <%= lolis[i].base_Vit %> <br/>
+                          </p>
+                        </div>
+                        <div class="card-footer text-center">
+                          <!-- <small class="text-muted">&#9733; &#9733; &#9733; &#9733; &#9734;</small> -->
+                          <a href="/professeur-loli/choice/<%= lolis[i].id %>">Choisir cette loli</a>
+                        </div>
+                      </div>
+                    </div>
+                  <% } %>
+
+                  
+
+                </div>
+                <!-- /.row -->
+
+              </div>
+              <!-- /.col-lg-9 -->
             </div>
         <% } %>
 

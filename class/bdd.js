@@ -5,15 +5,31 @@ class DB {
     }
 
 
-
+    // GET
     async getPlayerByMail(mail) {
       let query = "SELECT * FROM players WHERE mail = ?";
       return this.doQueryParams(query, [mail]);
     }
 
+    
+
+    async getPlayerById(id) {
+      let query = "SELECT * FROM players WHERE id = ?";
+      return this.doQueryParams(query, [id]);
+    }
+
+
+    // STORE
     async storeNewPlayer(pseudo, mail, password) {
       let query = "INSERT INTO players (pseudo, mail, password, money, rank) VALUES (?, ?, ?, ?, ?)";
       return this.doQueryParams(query, [pseudo, mail, password, this.Config.Player.INITIAL_MONEY, this.Config.Player.PLAYER_RANK]);
+    }
+
+    async storeFirstLoli(loli_type, player_id, pv, atk, def, vit) {
+      let query = "INSERT INTO lolis (loli_type, player_id, pv, atk, def, vit) VALUE (?, ?, ?, ?, ?, ?) ";
+      let query2 = "UPDATE players SET tutorial = 2 WHERE id = ?";
+      this.doQueryParams(query2, player_id);
+      return this.doQueryParams(query, [loli_type, player_id, pv, atk, def, vit]);
     }
 
 

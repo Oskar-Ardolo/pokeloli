@@ -46,13 +46,37 @@ const db = mysql.createConnection({
    	app.get("/", (req, res) => {
    		(async function() {
 	   		if(req.session.login == 1) {
-	   			res.render("LD/home.ejs")
+	   			let playerDB = await DBModel.getPlayerById(req.session.player.id)
+	   			let player = new Player(playerDB[0]);
+	   			res.render("LD/home.ejs", {player : player.player})
 	   		} else {
 	   			res.render("WL/home.ejs");
 	   		}
    		})();
-   		
-		
+	});
+	// GET
+   	app.get("/professeur-loli", (req, res) => {
+   		(async function() {
+	   		if(req.session.login == 1) {
+	   			let playerDB = await DBModel.getPlayerById(req.session.player.id)
+	   			let player = new Player(playerDB[0]);
+
+	   			if(player.getTutorial() == 1) {
+	   				let StartupLolis = Config.StartupLolis;
+	   				let lolis = [];
+	   				for(start of StartupLolis) {
+	   					lolis.push(Config.Lolis[start])
+	   				}
+
+	   				res.render("LD/professeur-loli.ejs", {player : player.player, lolis : lolis})
+	   			} else {
+	   				res.redirect("/")
+	   			}
+	   			
+	   		} else {
+	   			res.redirect("/login")
+	   		}
+   		})();
 	});
 
 	app.get("/login", (req, res) => {
@@ -67,6 +91,45 @@ const db = mysql.createConnection({
 		req.session.destroy();
 		req.session = null;
 		res.render("WL/login.ejs");
+	});
+
+	app.get("/error", (req, res) => {
+		res.render("error.ejs");
+	});
+
+	// FIRST LOLI 
+	app.get("/professeur-loli/choice/:id", (req, res) => {
+   		(async function() {
+	   		if(req.session.login == 1) {
+	   			let errorMessages = []
+	   			let playerDB = await DBModel.getPlayerById(req.session.player.id)
+	   			let player = new Player(playerDB[0]);
+	   			if(player.getTutorial() == 1) {
+	   				let choice = req.params.id;
+
+		   			// VERIFICATIONS
+		   			if(!Config.StartupLolis.includes(choice)) {
+		   				res.redirect("/error");
+		   				return;
+		   			}
+
+		   			let loliChoice = Config.Lolis[choice];
+
+		 			let insertLoli = await DBModel.storeFirstLoli(loliChoice.id, player.getId(), loliChoice.base_PV, loliChoice.base_ATQ, loliChoice.base_DEF, loliChoice.base_Vit);
+
+	   				res.redirect("/professeur-loli")
+		   		
+
+	   			} else {
+	   				res.redirect("/error")
+	   				return;
+	   			} // END IF NOT PLAYER.getTutorial == 1
+
+	   		} else { // END IF NOT LOGGED
+	   			res.redirect("/login")
+	   			return;
+	   		}
+   		})();
 	});
 
 
@@ -117,7 +180,7 @@ const db = mysql.createConnection({
 				if(player[0].password == passwordEncrypted) {
 					req.session.login = 1;
 					req.session.player = new Player(player[0]);
-					console.log(req.session.player.getPseudo());
+					req.session.player = req.session.player.player
 					req.session.save();
 					res.redirect('/');
 				} else {
@@ -136,9 +199,13 @@ const db = mysql.createConnection({
 
 	});
 
+	// LAST ROOT ERROR
+	app.get('*', function(req, res) {
+	    res.redirect('/error');
+	});
+
  });
 
-	
 
 
 	
