@@ -74,7 +74,7 @@
                 Arène de combat
               </div>
               <div class="card-body">
-                <table class="table table-hover">
+                <table class="table table-hover" id="playerList">
                   <thead>
                     <tr>
                       <th scope="col">#</th>
@@ -83,14 +83,6 @@
                       <th scope="col">Combattre</th>
                     </tr>
                   </thead>
-                  <tbody>
-                    <tr>
-                      <th scope="row">1</th>
-                      <td>Mark</td>
-                      <td>Otto</td>
-                      <td>@mdo</td>
-                    </tr>
-                  </tbody>
                 </table>
               </div>
             </div>
@@ -104,11 +96,13 @@
   <!-- Footer -->
   <footer class="py-5 bg-dark">
     <div class="container">
-      <p class="m-0 text-center text-white">Pokéloli &copy;  2021</p>
+      <p class="m-0 text-center text-white">Pokéloli &copy; 2021</p>
     </div>
     <!-- /.container -->
   </footer>
 
+  <input type="hidden" id="play_token" value="<%= token %>" />
+  <input type="hidden" id="pseudo" value="<%= player.pseudo %>" />
   <!-- Bootstrap core JavaScript -->
   <script src="vendor/jquery/jquery.min.js"></script>
   <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

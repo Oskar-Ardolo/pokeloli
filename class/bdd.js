@@ -18,6 +18,11 @@ class DB {
       return this.doQueryParams(query, [id]);
     }
 
+    async getPlayerByToken(token) {
+      let query = "SELECT * FROM players WHERE play_token = ?";
+      return this.doQueryParams(query, [token]);
+    }
+
 
     // STORE
     async storeNewPlayer(pseudo, mail, password) {
@@ -32,14 +37,17 @@ class DB {
       return this.doQueryParams(query, [loli_type, player_id, pv, atk, def, vit]);
     }
 
+    async storePlayToken(token, id_player) {
+      let query = "UPDATE players SET play_token = ? WHERE id = ?";
+      return this.doQueryParams(query, [token, id_player]);
+    }
 
 
-    // CORE FUNCTIONS NE PAS TOUCHER
     async doQuery(queryToDo) {
       let pro = new Promise((resolve,reject) => {
         let query = queryToDo;
         this.db.query(query, function (err, result) {
-            if (err) throw err; // GESTION D'ERREURS
+            if (err) throw err; 
             resolve(result);
         });
       })
@@ -53,7 +61,7 @@ class DB {
       let pro = new Promise((resolve,reject) => {
         let query = queryToDo;
         this.db.query(query, array, function (err, result) {
-            if (err) throw err; // GESTION D'ERREURS
+            if (err) throw err; 
             resolve(result);
         });
       })
@@ -62,18 +70,6 @@ class DB {
       })
     }
 
-    async doInsert(queryToDo, array) {
-      let pro = new Promise((resolve,reject) => {
-        let query = queryToDo;
-        this.db.query(query, array, function (err, result) {
-            if (err) throw err; // GESTION D'ERREURS
-            resolve(result);
-        });
-      })
-      return pro.then((val) => {
-        return val;
-      })
-    }
 }
 
 

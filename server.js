@@ -44,9 +44,9 @@ const db = mysql.createConnection({
    user: Config.DB.USER,
    password: Config.DB.PASSWORD,
    database : Config.DB.DATABASE
- });
+});
 
-  db.connect(function(err) {
+db.connect(function(err) {
 	if (err) throw err;
 	console.log("Connexion base de données MySQL : OK.");
     let DBModel = new DB(db, Config);
@@ -221,9 +221,21 @@ const db = mysql.createConnection({
 	// FIGHT
 	app.get('/arene', function(req, res) {
 		(async function() {
-			res.render("LD/fight.ejs");
+			if(req.session.login == 1) {
+				let errorMessages = []
+	   			let playerDB = await DBModel.getPlayerById(req.session.player.id)
+	   			let player = new Player(playerDB[0]);
+	   			let play_token = crypto.createHmac('sha256', player.email + new Date().getTime().toString())
+		               .update('i play pokeloli go')
+		               .digest('hex');
 
+		        let tokenPush = await DBModel.storePlayToken(play_token, req.session.player.id);
+		        console.log(tokenPush);
+		        res.render("LD/fight.ejs", {token : play_token, player : player.player});
 
+			} else {
+				res.redirect("/")
+			}
 
 		})();
 	    
@@ -234,7 +246,7 @@ const db = mysql.createConnection({
 	    res.redirect('/error');
 	});
 
- });
+
 
 
 
@@ -242,63 +254,81 @@ const db = mysql.createConnection({
 
 
 
-// ==============================================
-// =											=
-// =			Combat & Matchmaking			=						
-// =			Powered by Socket.io			=
-// =											=
-// ==============================================
-let currentRooms = [];
-let currentPlayers = [];
-let currentPlayersInformation = {};
+	// ==============================================
+	// =											=
+	// =			Combat & Matchmaking			=						
+	// =			Powered by Socket.io			=
+	// =											=
+	// ==============================================
+	let currentRooms = [];
+	let currentPlayers = [];
+	let currentPlayersInformation = {};
 
-(async function() {
-	io.on('connection', async function (socket) {
-		console.log('New player joined matchmaking');
+
+// io.use(function(socket, next) {
+//   var handshakeData = socket.request;
+//   console.log("middleware:", handshakeData._query['playToken']);
+//   next();
+// });
+
+
+
+	(async function() {
+		io.on('connection', async function (socket) {
+			console.log('New player joined matchmaking');
+			
+			let playToken = socket.request._query['foo'];
+			let playerDB = await DBModel.getPlayerByToken(playToken);
+	   		let player = new Player(playerDB[0]);
+
+			if(playerDB.length == 0) {
+				socket.emit('error', {message : "INVALID_TOKEN"})
+				return;
+			}
+			
+			if(!currentPlayers.includes(socket)) {
+				currentPlayers.push(socket)
+				currentPlayersInformation[socket.id] = { id : socket.id, niveau : player.player.level, pseudo : player.player.pseudo }
+				//currentPlayersInformation[currentPlayers[currentPlayers.indexOf(socket)].id] = { niveau : 5 }
+
+				socket.join("matchmaking");
+			}
+
+			//LOGS UTILES :
+			//
+			// console.log(currentPlayersInformation[socket.id].niveau);
+			// console.log(currentPlayersInformation);
+			// console.log(currentPlayers.indexOf(currentPlayers[socket]))
+			//
+
+			let matchmaking = io.to('matchmaking');
 		
-		if(!currentPlayers.includes(socket)) {
-			currentPlayers.push(socket)
-			currentPlayersInformation[socket.id] = { id : socket.id, niveau : 5, pseudo : "diagramma" }
-			//currentPlayersInformation[currentPlayers[currentPlayers.indexOf(socket)].id] = { niveau : 5 }
-
-			socket.join("matchmaking");
-		}
-
-		//LOGS UTILES :
-		//
-		// console.log(currentPlayersInformation[socket.id].niveau);
-		// console.log(currentPlayersInformation);
-		// console.log(currentPlayers.indexOf(currentPlayers[socket]))
-		//
-
-		console.log(currentPlayers.length)
-		let matchmaking = io.to('matchmaking');
-	
-		console.log(currentPlayersInformation);
-		await matchmaking.emit('playerCount', {val : Object.keys(currentPlayers).length, players : currentPlayersInformation});
-		 
+			console.log(currentPlayersInformation);
+			await matchmaking.emit('playerCount', {val : Object.keys(currentPlayers).length, players : currentPlayersInformation});
+			 
 
 
-		socket.on('message', function(data) {
-			console.log(data);
-			io.sockets.emit("message", {pseudo : data.pseudo, message : data.message});
+			socket.on('message', function(data) {
+				console.log(data);
+				io.sockets.emit("message", {pseudo : data.pseudo, message : data.message});
+			});
+
+			socket.on('disconnect', () => {
+
+		    	console.log("Someone left")
+
+		    	currentPlayers.splice(currentPlayers.indexOf(socket), 1)
+		    	delete currentPlayersInformation[socket.id]
+
+		    	// currentPlayersInformation.splice(currentPlayersInformation.indexOf(socket.id), 1)
+
+		    	matchmaking.emit('playerCount', {val : currentPlayers.length});
+
+		  	});
 		});
+	})();
 
-		socket.on('disconnect', () => {
-
-	    	console.log("Someone left")
-
-	    	currentPlayers.splice(currentPlayers.indexOf(socket), 1)
-	    	delete currentPlayersInformation[socket.id]
-	    	
-	    	// currentPlayersInformation.splice(currentPlayersInformation.indexOf(socket.id), 1)
-
-	    	matchmaking.emit('playerCount', {val : currentPlayers.length});
-
-	  	});
-	});
-})();
-
+});
 
 server.listen(8080);
 app.listen(PORT);
