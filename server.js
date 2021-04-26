@@ -12,6 +12,17 @@ var server = require('http').Server(app);
 var io = require('socket.io')(server);
 
 
+Array.prototype.remove = function() {
+    var what, a = arguments, L = a.length, ax;
+    while (L && this.length) {
+        what = a[--L];
+        while ((ax = this.indexOf(what)) !== -1) {
+            this.splice(ax, 1);
+        }
+    }
+    return this;
+};
+
 var app = express();
 app.set('trust proxy', 1) // trust first proxy
 app.use(express.static(__dirname + '/public'));
@@ -61,16 +72,24 @@ const db = mysql.createConnection({
 	   			let playerDB = await DBModel.getPlayerById(req.session.player.id)
 	   			let player = new Player(playerDB[0]);
 
-	   			if(player.getTutorial() == 1) {
-	   				let StartupLolis = Config.StartupLolis;
-	   				let lolis = [];
-	   				for(start of StartupLolis) {
-	   					lolis.push(Config.Lolis[start])
-	   				}
+	   			switch(player.getTutorial()) {
+	   				case 1 :
+	   					let StartupLolis = Config.StartupLolis;
+		   				let lolis = [];
+		   				for(start of StartupLolis) {
+		   					lolis.push(Config.Lolis[start])
+		   				}
 
-	   				res.render("LD/professeur-loli.ejs", {player : player.player, lolis : lolis})
-	   			} else {
-	   				res.redirect("/")
+		   				res.render("LD/professeur-loli.ejs", {player : player.player, lolis : lolis})
+	   				break;
+	   				
+	   				case 2:
+	   					res.render("LD/professeur-loli2.ejs", {player : player.player})
+	   				break;
+
+	   				default:
+	   					res.redirect("/")
+	   				break;
 	   			}
 	   			
 	   		} else {
@@ -199,6 +218,17 @@ const db = mysql.createConnection({
 
 	});
 
+	// FIGHT
+	app.get('/arene', function(req, res) {
+		(async function() {
+			res.render("LD/fight.ejs");
+
+
+
+		})();
+	    
+	});
+
 	// LAST ROOT ERROR
 	app.get('*', function(req, res) {
 	    res.redirect('/error');
@@ -218,15 +248,57 @@ const db = mysql.createConnection({
 // =			Powered by Socket.io			=
 // =											=
 // ==============================================
+let currentRooms = [];
+let currentPlayers = [];
+let currentPlayersInformation = {};
+
+(async function() {
+	io.on('connection', async function (socket) {
+		console.log('New player joined matchmaking');
+		
+		if(!currentPlayers.includes(socket)) {
+			currentPlayers.push(socket)
+			currentPlayersInformation[socket.id] = { id : socket.id, niveau : 5, pseudo : "diagramma" }
+			//currentPlayersInformation[currentPlayers[currentPlayers.indexOf(socket)].id] = { niveau : 5 }
+
+			socket.join("matchmaking");
+		}
+
+		//LOGS UTILES :
+		//
+		// console.log(currentPlayersInformation[socket.id].niveau);
+		// console.log(currentPlayersInformation);
+		// console.log(currentPlayers.indexOf(currentPlayers[socket]))
+		//
+
+		console.log(currentPlayers.length)
+		let matchmaking = io.to('matchmaking');
+	
+		console.log(currentPlayersInformation);
+		await matchmaking.emit('playerCount', {val : Object.keys(currentPlayers).length, players : currentPlayersInformation});
+		 
 
 
-io.on('connection', function (socket) {
-	console.log('new one');
-	socket.on('message', function(data) {
-		console.log(data);
-		io.sockets.emit("message", {pseudo : data.pseudo, message : data.message});
+		socket.on('message', function(data) {
+			console.log(data);
+			io.sockets.emit("message", {pseudo : data.pseudo, message : data.message});
+		});
+
+		socket.on('disconnect', () => {
+
+	    	console.log("Someone left")
+
+	    	currentPlayers.splice(currentPlayers.indexOf(socket), 1)
+	    	delete currentPlayersInformation[socket.id]
+	    	
+	    	// currentPlayersInformation.splice(currentPlayersInformation.indexOf(socket.id), 1)
+
+	    	matchmaking.emit('playerCount', {val : currentPlayers.length});
+
+	  	});
 	});
-});
+})();
+
 
 server.listen(8080);
 app.listen(PORT);
