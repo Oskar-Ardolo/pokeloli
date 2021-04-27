@@ -230,7 +230,6 @@ db.connect(function(err) {
 		               .digest('hex');
 
 		        let tokenPush = await DBModel.storePlayToken(play_token, req.session.player.id);
-		        console.log(tokenPush);
 		        res.render("LD/fight.ejs", {token : play_token, player : player.player});
 
 			} else {
@@ -282,13 +281,13 @@ db.connect(function(err) {
 	   		let player = new Player(playerDB[0]);
 
 			if(playerDB.length == 0) {
-				socket.emit('error', {message : "INVALID_TOKEN"})
+				socket.emit('error_message', {message : "INVALID_TOKEN"})
 				return;
 			}
 			
 			if(!currentPlayers.includes(socket)) {
 				currentPlayers.push(socket)
-				currentPlayersInformation[socket.id] = { id : socket.id, niveau : player.player.level, pseudo : player.player.pseudo }
+				currentPlayersInformation[socket.id] = { id : socket.id, niveau : player.player.level, pseudo : player.player.pseudo, id_player : player.player.id }
 				//currentPlayersInformation[currentPlayers[currentPlayers.indexOf(socket)].id] = { niveau : 5 }
 
 				socket.join("matchmaking");
@@ -302,27 +301,35 @@ db.connect(function(err) {
 			//
 
 			let matchmaking = io.to('matchmaking');
-		
-			console.log(currentPlayersInformation);
+	
 
 			await matchmaking.emit('playerCount', {val : Object.keys(currentPlayers).length, players : currentPlayersInformation});
 			 
 
 
-			socket.on('message', function(data) {
+			socket.on('defi', function(data) {
 				console.log(data);
-				io.sockets.emit("message", {pseudo : data.pseudo, message : data.message});
+
+				let challengedPlayer = currentPlayersInformation[data.playerId];
+				let challengerPlayer = currentPlayersInformation[socket.id];
+
+				if(challengedPlayer == null) {
+					console.log("INVALID_PLAYER")
+					console.log(currentPlayersInformation)
+					socket.emit('error_message', {message : "INVALID_PLAYER"})
+					return;
+				}
+
+				// let challengerPlayer = await DBModel.getPlayerById(challengedPlayer.id_player);
+
+				socket.broadcast.to(data.playerId).emit('defi', {challenger : challengerPlayer})
+				//io.sockets.emit("message", {pseudo : data.pseudo, message : data.message});
 			});
 
 			socket.on('disconnect', () => {
-
 		    	console.log("Someone left")
-
 		    	currentPlayers.splice(currentPlayers.indexOf(socket), 1)
 		    	delete currentPlayersInformation[socket.id]
-
-		    	// currentPlayersInformation.splice(currentPlayersInformation.indexOf(socket.id), 1)
-
 		    	matchmaking.emit('playerCount', {val : currentPlayers.length, players : currentPlayersInformation});
 
 		  	});
@@ -335,3 +342,7 @@ server.listen(8080);
 app.listen(PORT);
 console.log("Server startup : OK")
 console.log("Server running : http://localhost:"+PORT+"/");
+
+
+
+ 
