@@ -304,6 +304,7 @@ db.connect(function(err) {
 			let matchmaking = io.to('matchmaking');
 		
 			console.log(currentPlayersInformation);
+
 			await matchmaking.emit('playerCount', {val : Object.keys(currentPlayers).length, players : currentPlayersInformation});
 			 
 
@@ -322,7 +323,7 @@ db.connect(function(err) {
 
 		    	// currentPlayersInformation.splice(currentPlayersInformation.indexOf(socket.id), 1)
 
-		    	matchmaking.emit('playerCount', {val : currentPlayers.length});
+		    	matchmaking.emit('playerCount', {val : currentPlayers.length, players : currentPlayersInformation});
 
 		  	});
 		});

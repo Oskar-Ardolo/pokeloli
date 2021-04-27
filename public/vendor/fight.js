@@ -7,18 +7,21 @@ $(document).ready(function() {
 	socket.on('playerCount', function (data) {
 		inf = data;
 		let players = data.players;
+		let table = '<thead><tr><th scope="col">#</th><th scope="col">Pseudo</th><th scope="col">Niveau</th><th scope="col">Combattre</th></tr></thead>';
 		for(key of Object.getOwnPropertyNames(inf.players)) {
 			console.log(players[key])
-			$("#playerList").append('<tbody> ' +
+			table +='<tbody> ' +
                   '  <tr>' +
                   '    <th scope="row">#</th>' +
                   '    <td>'+players[key].pseudo+'</td>' +
                   '    <td>'+players[key].niveau+'</td>' +
                   '    <td><a class="btn btn-danger" href="/fight/'+players[key].id+'">Combattre !</<></td>' +
                   '  </tr>' +
-                  '</tbody>');
-		}
+                  '</tbody>';
 
+		}
+		console.log(table)
+		$("#playerList").html(table);
 
 		$("#playerCount").text(data.val);
 	});
